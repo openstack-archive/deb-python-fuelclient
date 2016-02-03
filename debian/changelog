@@ -1,0 +1,5 @@
+python-fuelclient (9.0.0~0+2016.02.01.git.7f4bacbed0-1) experimental; urgency=medium
+
+  * Initial release. (Closes: #XXXXXX)
+
+ -- Thomas Goirand <zigo@debian.org>  Wed, 03 Feb 2016 18:53:43 +0800
