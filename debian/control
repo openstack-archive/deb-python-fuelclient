@@ -69,16 +69,16 @@ Description: CLI tool and a Python API wrapper for interacting with Fuel - Pytho
  .
  This package provides the Python 2.7 module.
 
-Package: python-fuelclient
+Package: python3-fuelclient
 Architecture: all
-Depends: python-cliff (>= 1.14.0),
-         python-keystoneclient (>= 1:1.6.0),
-         python-pbr (>= 1.6),
-         python-requests (>= 2.5.2),
-         python-six (>= 1.9.0),
-         python-yaml (>= 3.1.0),
+Depends: python3-cliff (>= 1.14.0),
+         python3-keystoneclient (>= 1:1.6.0),
+         python3-pbr (>= 1.6),
+         python3-requests (>= 2.5.2),
+         python3-six (>= 1.9.0),
+         python3-yaml (>= 3.1.0),
          ${misc:Depends},
-         ${python:Depends},
+         ${python3:Depends},
 Provides: ${python:Provides},
 Description: CLI tool and a Python API wrapper for interacting with Fuel - Python 3.x
  Fuel is an open source deployment and management tool for OpenStack. Developed
