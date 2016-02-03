@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+if [ "$1" = "configure" ] ; then
+	update-alternatives --install /usr/bin/fuel fuel /usr/bin/python3-fuel 200
+	update-alternatives --install /usr/bin/fuel2 fuel2 /usr/bin/python3-fuel2 200
+fi
+
+#DEBHELPER#
+
+exit 0

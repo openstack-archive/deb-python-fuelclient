@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+if [ "$1" = "remove" ] || [ "$1" = "disappear" ] ; then
+	update-alternatives --remove fuel /usr/bin/python2-fuel
+	update-alternatives --remove fuel2 /usr/bin/python2-fuel2
+fi
+
+#DEBHELPER#
+
+exit 0

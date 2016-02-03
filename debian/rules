@@ -21,6 +21,10 @@ override_dh_auto_install:
 			--root $(CURDIR)/debian/python3-fuelclient; \
 	done
 	rm -f $(CURDIR)/debian/python*/usr/lib/python*/dist-packages/*.pth
+	mv $(CURDIR)/debian/python-fuelclient/usr/bin/fuel $(CURDIR)/debian/python-fuelclient/usr/bin/python2-fuel
+	mv $(CURDIR)/debian/python3-fuelclient/usr/bin/fuel $(CURDIR)/debian/python3-fuelclient/usr/bin/python3-fuel
+	mv $(CURDIR)/debian/python-fuelclient/usr/bin/fuel2 $(CURDIR)/debian/python-fuelclient/usr/bin/python2-fuel2
+	mv $(CURDIR)/debian/python3-fuelclient/usr/bin/fuel2 $(CURDIR)/debian/python3-fuelclient/usr/bin/python3-fuel2
 
 override_dh_auto_test:
 ifeq (,$(findstring nocheck, $(DEB_BUILD_OPTIONS)))
