@@ -25,11 +25,11 @@ class TestHandlers(base.BaseTestCase):
     def test_env_action(self):
         # check env help
         help_msgs = ["usage: fuel environment [-h]",
-                     "[--list | --set | --delete | --create | --update]",
+                     "[--list | --set | --delete | --create]",
                      "optional arguments:", "--help", "--list", "--set",
                      "--delete", "--rel", "--env-create",
                      "--create", "--name", "--env-name", "--nst",
-                     "--net-segment-type", "--update", "--env-update"]
+                     "--net-segment-type"]
         self.check_all_in_msg("env --help", help_msgs)
         # no clusters
         self.check_for_rows_in_table("env")
@@ -55,8 +55,9 @@ class TestHandlers(base.BaseTestCase):
 
     def test_node_action(self):
         help_msg = ["fuel node [-h] [--env ENV]",
-                    "[--list | --set | --delete | --network | --disk |"
-                    " --deploy | --hostname HOSTNAME | --name NAME |"
+                    "[--list | --set | --delete | --attributes |"
+                    " --network | --disk | --deploy |"
+                    " --hostname HOSTNAME | --name NAME |"
                     " --delete-from-db | --provision]", "-h", "--help", " -s",
                     "--default", " -d", "--download", " -u",
                     "--upload", "--dir", "--node", "--node-id", " -r",
@@ -181,7 +182,7 @@ class TestHandlers(base.BaseTestCase):
         actions = (
             "node", "stop", "deployment", "reset", "task", "network",
             "settings", "provisioning", "environment", "deploy-changes",
-            "role", "release", "snapshot", "health"
+            "role", "release", "snapshot", "health", "vip"
         )
         for action in actions:
             self.check_all_in_msg("{0} -h".format(action), ("Examples",))
@@ -191,7 +192,7 @@ class TestHandlers(base.BaseTestCase):
             "task --task-id 1 --debug",
             [
                 "GET http://127.0.0.1",
-                "/api/v1/tasks/1/"
+                "/api/v1/transactions/1/"
             ],
             check_errors=False
         )
@@ -199,7 +200,7 @@ class TestHandlers(base.BaseTestCase):
             "task --task-id 1 --delete --debug",
             [
                 "DELETE http://127.0.0.1",
-                "/api/v1/tasks/1/?force=0"
+                "/api/v1/transactions/1/?force=0"
             ],
             check_errors=False
         )
@@ -207,7 +208,7 @@ class TestHandlers(base.BaseTestCase):
             "task --task-id 1 --delete --force --debug",
             [
                 "DELETE http://127.0.0.1",
-                "/api/v1/tasks/1/?force=1"
+                "/api/v1/transactions/1/?force=1"
             ],
             check_errors=False
         )
@@ -215,7 +216,7 @@ class TestHandlers(base.BaseTestCase):
             "task --tid 1 --delete --debug",
             [
                 "DELETE http://127.0.0.1",
-                "/api/v1/tasks/1/?force=0"
+                "/api/v1/transactions/1/?force=0"
             ],
             check_errors=False
         )
@@ -416,13 +417,30 @@ class TestDownloadUploadNodeAttributes(base.BaseTestCase):
 
 class TestDeployChanges(base.BaseTestCase):
 
-    def test_deploy_changes_no_failure(self):
+    create_env = "env create --name=test --release={0}"
+    add_node = "--env-id=1 node set --node 1 --role=controller"
+    deploy_changes = "deploy-changes --env 1"
+    redeploy_changes = "redeploy-changes --env 1"
+
+    def setUp(self):
+        super(TestDeployChanges, self).setUp()
         self.load_data_to_nailgun_server()
         release_id = self.get_first_deployable_release_id()
-        env_create = "env create --name=test --release={0}".format(release_id)
-        add_node = "--env-id=1 node set --node 1 --role=controller"
-        deploy_changes = "deploy-changes --env 1"
-        self.run_cli_commands((env_create, add_node, deploy_changes))
+        self.create_env = self.create_env.format(release_id)
+        self.run_cli_commands((self.create_env, self.add_node))
+
+    def test_deploy_changes(self):
+        self.run_cli_commands((self.deploy_changes,))
+
+    def test_no_changes_to_deploy(self):
+        self.run_cli_commands((self.deploy_changes,))
+        self.check_for_stderr(self.deploy_changes,
+                              "(No changes to deploy)\n",
+                              check_errors=False)
+
+    def test_redeploy_changes(self):
+        self.run_cli_commands((self.deploy_changes,
+                               self.redeploy_changes))
 
 
 class TestDirectoryDoesntExistErrorMessages(base.BaseTestCase):
@@ -500,3 +518,28 @@ class TestDirectoryDoesntExistErrorMessages(base.BaseTestCase):
             "Directory '/foo/bar/baz' doesn't exist.\n",
             check_errors=False
         )
+
+
+class TestUploadSettings(base.BaseTestCase):
+
+    create_env = "env create --name=test --release={0}"
+    add_node = "--env-id=1 node set --node 1 --role=controller"
+    deploy_changes = "deploy-changes --env 1"
+    cmd = "settings --env 1"
+    cmd_force = "settings --env 1 --force"
+
+    def setUp(self):
+        super(TestUploadSettings, self).setUp()
+        self.load_data_to_nailgun_server()
+        release_id = self.get_first_deployable_release_id()
+        self.create_env = self.create_env.format(release_id)
+        self.run_cli_commands((
+            self.create_env,
+            self.add_node,
+            self.download_command(self.cmd)
+        ))
+
+    def test_upload_settings(self):
+        msg_success = "Settings configuration uploaded.\n"
+        self.check_for_stdout(self.upload_command(self.cmd),
+                              msg_success)

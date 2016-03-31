@@ -19,6 +19,7 @@ import requests
 from keystoneclient.v2_0 import client as auth_client
 from six.moves.urllib import parse as urlparse
 
+from fuelclient.cli import error
 from fuelclient import fuelclient_settings
 from fuelclient.logs import NullHandler
 
@@ -43,9 +44,6 @@ class Client(object):
         self.keystone_base = urlparse.urljoin(self.root, "/keystone/v2.0")
         self.api_root = urlparse.urljoin(self.root, "/api/v1/")
         self.ostf_root = urlparse.urljoin(self.root, "/ostf/")
-        self.user = conf.KEYSTONE_USER
-        self.password = conf.KEYSTONE_PASS
-        self.tenant = 'admin'
         self._keystone_client = None
         self._auth_required = None
         self._session = None
@@ -109,7 +107,7 @@ class Client(object):
         if self._auth_required is None:
             url = self.api_root + 'version'
             resp = requests.get(url)
-            resp.raise_for_status()
+            self._raise_for_status_with_info(resp)
 
             self._auth_required = resp.json().get('auth_required', False)
         return self._auth_required
@@ -121,17 +119,22 @@ class Client(object):
         return self._keystone_client
 
     def update_own_password(self, new_pass):
+        conf = fuelclient_settings.get_settings()
+
         if self.auth_token:
-            self.keystone_client.users.update_own_password(
-                self.password, new_pass)
+            self.keystone_client.users.update_own_password(conf.OS_PASSWORD,
+                                                           new_pass)
 
     def initialize_keystone_client(self):
+        conf = fuelclient_settings.get_settings()
+
         if self.auth_required:
             self._keystone_client = auth_client.Client(
-                username=self.user,
-                password=self.password,
                 auth_url=self.keystone_base,
-                tenant_name=self.tenant)
+                username=conf.OS_USERNAME,
+                password=conf.OS_PASSWORD,
+                tenant_name=conf.OS_TENANT_NAME)
+
             self._keystone_client.session.auth = self._keystone_client
             self._keystone_client.authenticate()
 
@@ -150,23 +153,26 @@ class Client(object):
         self.print_debug('DELETE {0}'.format(url))
 
         resp = self.session.delete(url)
-        resp.raise_for_status()
+        self._raise_for_status_with_info(resp)
 
         if resp.status_code == 204:
             return {}
 
         return resp.json()
 
-    def put_request(self, api, data):
-        """Make PUT request to specific API with some data."""
+    def put_request(self, api, data, **params):
+        """Make PUT request to specific API with some data.
 
+        :param api: API endpoint (path)
+        :param data: Data send in request, will be serialized to JSON
+        :param params: Params of query string
+        """
         url = self.api_root + api
-
         data_json = json.dumps(data)
-        self.print_debug('PUT {0} data={1}'.format(url, data_json))
+        resp = self.session.put(url, data=data_json, params=params)
 
-        resp = self.session.put(url, data=data_json)
-        resp.raise_for_status()
+        self.print_debug('PUT {0} data={1}'.format(resp.url, data_json))
+        self._raise_for_status_with_info(resp)
 
         return resp.json()
 
@@ -189,7 +195,7 @@ class Client(object):
         params = params or {}
 
         resp = self.get_request_raw(api, ostf, params)
-        resp.raise_for_status()
+        self._raise_for_status_with_info(resp)
 
         return resp.json()
 
@@ -212,12 +218,18 @@ class Client(object):
         """Make POST request to specific API with some data
         """
         resp = self.post_request_raw(api, data, ostf=ostf)
-        resp.raise_for_status()
+        self._raise_for_status_with_info(resp)
 
         return resp.json()
 
     def get_fuel_version(self):
         return self.get_request("version")
+
+    def _raise_for_status_with_info(self, response):
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            raise error.HTTPError(error.get_full_error_message(e))
 
 # This line is single point of instantiation for 'Client' class,
 # which intended to implement Singleton design pattern.

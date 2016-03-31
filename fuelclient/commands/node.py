@@ -12,6 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
+import operator
+import os
+
 import six
 
 from fuelclient.commands import base
@@ -65,6 +69,11 @@ class NodeList(NodeMixIn, base.BaseListCommand):
 
 class NodeShow(NodeMixIn, base.BaseShowCommand):
     """Show info about node with given id."""
+    numa_fields = (
+        'numa_nodes',
+        'supported_hugepages',
+        'distances')
+
     columns = ('id',
                'name',
                'status',
@@ -87,6 +96,17 @@ class NodeShow(NodeMixIn, base.BaseShowCommand):
                # TODO(romcheg): network_data mostly never fits the screen
                # 'network_data',
                'manufacturer')
+    columns += numa_fields
+
+    def take_action(self, parsed_args):
+        data = self.client.get_by_id(parsed_args.id)
+
+        numa_topology = data['meta'].get('numa_topology', {})
+        for key in self.numa_fields:
+            data[key] = numa_topology.get(key)
+
+        data = data_utils.get_display_data_single(self.columns, data)
+        return self.columns, data
 
 
 class NodeUpdate(NodeMixIn, base.BaseShowCommand):
@@ -263,3 +283,90 @@ class NodeLabelDelete(NodeMixIn, base.BaseCommand):
         msg = "Labels have been deleted on nodes: {0} \n".format(
             ','.join(data))
         self.app.stdout.write(msg)
+
+
+class NodeAttributesDownload(NodeMixIn, base.BaseCommand):
+    """Download node attributes."""
+
+    def get_parser(self, prog_name):
+        parser = super(NodeAttributesDownload, self).get_parser(prog_name)
+
+        parser.add_argument(
+            'id', type=int, help='Node ID')
+        parser.add_argument(
+            '--dir', type=str, help='Directory to save attributes')
+
+        return parser
+
+    def take_action(self, parsed_args):
+        file_path = self.client.download_attributes(
+            parsed_args.id, parsed_args.dir)
+        self.app.stdout.write(
+            "Attributes for node {0} were written to {1}"
+            .format(parsed_args.id, file_path) + os.linesep)
+
+
+class NodeAttributesUpload(NodeMixIn, base.BaseCommand):
+    """Upload node attributes."""
+
+    def get_parser(self, prog_name):
+        parser = super(NodeAttributesUpload, self).get_parser(prog_name)
+
+        parser.add_argument(
+            'id', type=int, help='Node ID')
+        parser.add_argument(
+            '--dir', type=str, help='Directory to read attributes from')
+
+        return parser
+
+    def take_action(self, parsed_args):
+        self.client.upload_attributes(parsed_args.id, parsed_args.dir)
+        self.app.stdout.write(
+            "Attributes for node {0} were uploaded."
+            .format(parsed_args.id) + os.linesep)
+
+
+class NodeAnsibleInventory(NodeMixIn, base.BaseCommand):
+    """Generate ansible inventory file based on the nodes list."""
+
+    def get_parser(self, prog_name):
+        parser = super(NodeAnsibleInventory, self).get_parser(prog_name)
+
+        # if this is a required argument, we'll avoid ambiguity of having nodes
+        # of multiple different clusters in the same inventory file
+        parser.add_argument(
+            '-e',
+            '--env',
+            type=int,
+            required=True,
+            help='Use only nodes that are in the specified environment')
+
+        parser.add_argument(
+            '-l',
+            '--labels',
+            type=utils.str_to_unicode,
+            nargs='+',
+            help='Use only nodes that have specific labels')
+
+        return parser
+
+    def take_action(self, parsed_args):
+        data = self.client.get_all(environment_id=parsed_args.env,
+                                   labels=parsed_args.labels)
+
+        nodes_by_role = collections.defaultdict(list)
+        for node in data:
+            for role in node['roles']:
+                nodes_by_role[role].append(node)
+
+        for role, nodes in sorted(nodes_by_role.items()):
+            self.app.stdout.write(u'[{role}]\n'.format(role=role))
+            self.app.stdout.write(
+                u'\n'.join(
+                    u'{name} ansible_host={ip}'.format(name=node['hostname'],
+                                                       ip=node['ip'])
+                    for node in sorted(nodes_by_role[role],
+                                       key=operator.itemgetter('hostname'))
+                )
+            )
+            self.app.stdout.write(u'\n\n')

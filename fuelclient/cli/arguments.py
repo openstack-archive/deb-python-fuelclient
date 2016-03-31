@@ -25,6 +25,7 @@ substitutions = {
     # replace from: to
     "env": "environment",
     "nodes": "node",
+    "statuses": "status",
     "net": "network",
     "rel": "release",
     "list": "--list",
@@ -175,6 +176,15 @@ def get_env_arg(required=False):
         "env",
         flags=("--env-id",),
         help="environment id",
+        required=required
+    )
+
+
+def get_single_task_arg(required=False):
+    return get_int_arg(
+        "task",
+        flags=("--task-id", "--tid"),
+        help="task id",
         required=required
     )
 
@@ -388,11 +398,6 @@ def get_download_arg(help_msg):
 
 def get_list_arg(help_msg):
     return get_boolean_arg("list", flags=("-l",), help=help_msg)
-
-
-def get_update_arg(help_msg):
-    return get_boolean_arg("update",
-                           flags=("--env-update",), help=help_msg)
 
 
 def get_dir_arg(help_msg):
@@ -631,3 +636,65 @@ def get_notify_topic_arg(help_msg):
         ),
         help=help_msg
     )
+
+
+def get_vip_arg(help_msg):
+    return get_boolean_arg(
+        "vip",
+        flags=("--vip",),
+        help=help_msg
+    )
+
+
+def get_ip_id_arg(help_msg):
+    return get_int_arg(
+        "ip-address-id",
+        flags=("--ip-address-id",),
+        help=help_msg
+    )
+
+
+def get_network_id_arg(help_msg):
+    return get_int_arg(
+        "network",
+        flags=("--network",),
+        help=help_msg
+    )
+
+
+def get_network_role_arg(help_msg):
+    return get_str_arg(
+        "network-role",
+        flags=("--network-role",),
+        help=help_msg
+    )
+
+
+def get_upload_file_arg(help_msg):
+    return get_str_arg(
+        "upload",
+        flags=("-u", "--upload",),
+        help=help_msg
+    )
+
+
+def get_status_arg(help_msg):
+    default_kwargs = {
+        "action": SetAction,
+        "flags": ("--status",),
+        "nargs": '+',
+        "default": None,
+        "help": help_msg
+    }
+    return get_arg("status", **default_kwargs)
+
+
+def get_deployment_node_arg(help_msg):
+    default_kwargs = {
+        "action": SetAction,
+        "flags": ("--node-id",),
+        "nargs": '+',
+        "default": None,
+        "help": help_msg
+    }
+    return get_arg("node", **default_kwargs)

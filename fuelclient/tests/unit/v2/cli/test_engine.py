@@ -21,7 +21,6 @@ import mock
 from oslotest import base as oslo_base
 
 import fuelclient
-from fuelclient.cli import error
 from fuelclient.commands import environment as env
 from fuelclient import main as main_mod
 
@@ -72,19 +71,6 @@ class BaseCLITest(oslo_base.BaseTestCase):
         self.exec_command(*args)
         m_run_command.assert_called_once_with(args)
 
-    @mock.patch.object(sys, 'stderr')
-    @mock.patch('cliff.app.App.run_subcommand')
-    def test_exec_command_error_handle(self, m_run, m_stderr):
-        error_msg = 'Test error'
-        expected_output = error_msg + '\n'
-
-        m_run.side_effect = error.FuelClientException(error_msg)
-
-        self.assertRaises(SystemExit,
-                          self.exec_command,
-                          'some command --fail True')
-        m_stderr.write.assert_called_once_with(expected_output)
-
     @mock.patch('cliff.commandmanager.CommandManager.find_command')
     def test_command_interactive(self, m_find_command):
         commands = ['quit']
@@ -122,3 +108,18 @@ class BaseCLITest(oslo_base.BaseTestCase):
                                             expected_data,
                                             mock.ANY,
                                             mock.ANY)
+
+    @mock.patch('fuelclient.fuelclient_settings.'
+                'FuelClientSettings.update_from_command_line_options')
+    def test_settings_override_called(self, m_update):
+        cmd = ('--os-password tpass --os-username tname --os-tenant-name tten '
+               'node list')
+
+        self.exec_command(cmd)
+
+        m_update.assert_called_once_with(mock.ANY)
+        passed_settings = m_update.call_args[0][0]
+
+        self.assertEqual('tname', passed_settings.os_username)
+        self.assertEqual('tpass', passed_settings.os_password)
+        self.assertEqual('tten', passed_settings.os_tenant_name)

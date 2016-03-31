@@ -38,7 +38,6 @@ class EnvShow(EnvMixIn, base.BaseShowCommand):
                "fuel_version",
                "name",
                "release_id",
-               "pending_release_id",
                "is_customized",
                "changes")
 
@@ -79,7 +78,7 @@ class EnvCreate(EnvMixIn, base.BaseShowCommand):
 
     def take_action(self, parsed_args):
         if parsed_args.nst == 'gre':
-            self.app.stdout.write('WARNING: GRE network segmentation type is '
+            self.app.stderr.write('WARNING: GRE network segmentation type is '
                                   'deprecated since 7.0 release')
 
         new_env = self.client.create(name=parsed_args.name,
@@ -150,32 +149,6 @@ class EnvUpdate(EnvMixIn, base.BaseShowCommand):
                                                          updated_env)
 
         return (self.columns, updated_env)
-
-
-class EnvUpgrade(EnvMixIn, base.BaseCommand):
-    """Upgrades environment to given relese."""
-
-    def get_parser(self, prog_name):
-        parser = super(EnvUpgrade, self).get_parser(prog_name)
-
-        parser.add_argument('id',
-                            type=int,
-                            help='Id of the environmen to be upgraded.')
-
-        parser.add_argument('pending_release_id',
-                            type=int,
-                            help='Relese id for upgrading the environment to')
-
-        return parser
-
-    def take_action(self, parsed_args):
-        task_id = self.client.upgrade(parsed_args.id,
-                                      parsed_args.pending_release_id)
-
-        msg = 'Upgrade task with id {0} for the environment '\
-              'has been started.\n'.format(task_id)
-
-        self.app.stdout.write(msg)
 
 
 class EnvAddNodes(EnvMixIn, base.BaseCommand):

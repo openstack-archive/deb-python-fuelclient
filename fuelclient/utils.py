@@ -120,7 +120,7 @@ def iterfiles(dir_path, file_pattern):
     :param dir_path: path to directory, e.g /etc/puppet/
     :param file_pattern: unix filepattern to match files
     """
-    for root, dirs, file_names in os.walk(dir_path):
+    for root, dirs, file_names in os.walk(dir_path, followlinks=True):
         for file_name in file_names:
             if fnmatch(file_name, file_pattern):
                 yield os.path.join(root, file_name)
@@ -194,3 +194,22 @@ def safe_deserialize(loader):
                                          ''.format(e.__class__.__name__,
                                                    six.text_type(e)))
     return wrapper
+
+
+def add_os_cli_parameters(parser):
+    parser.add_argument(
+        '--os-auth-url', metavar='<auth-url>',
+        help='Authentication URL, defaults to env[OS_AUTH_URL].')
+
+    parser.add_argument(
+        '--os-tenant-name', metavar='<auth-tenant-name>',
+        help='Authentication tenant name, defaults to '
+             'env[OS_TENANT_NAME].')
+
+    parser.add_argument(
+        '--os-username', metavar='<auth-username>',
+        help='Authentication username, defaults to env[OS_USERNAME].')
+
+    parser.add_argument(
+        '--os-password', metavar='<auth-password>',
+        help='Authentication password, defaults to env[OS_PASSWORD].')

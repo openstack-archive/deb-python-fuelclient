@@ -23,6 +23,7 @@ import mock
 import requests
 
 from fuelclient.cli import error
+from fuelclient import client
 from fuelclient.common import data_utils
 from fuelclient.tests.unit.v1 import base
 from fuelclient import utils
@@ -41,7 +42,7 @@ class TestUtils(base.UnitTestCase):
         expected_result = [os.path.join(directory, 'valid.yaml')]
         files = list(utils.iterfiles(directory, pattern))
 
-        mwalk.assert_called_once_with(directory)
+        mwalk.assert_called_once_with(directory, followlinks=True)
         self.assertEqual(expected_result, files)
 
     def make_process_mock(self, return_code=0):
@@ -192,31 +193,17 @@ class TestUtils(base.UnitTestCase):
                          error_body.decode('utf-8'))
 
     def test_get_display_data_single(self):
-        test_data = {'a': 1, 'b': 2, 'c': 3}
-        fields = ('b', 'c')
-
-        result = data_utils.get_display_data_single(fields, test_data)
-        self.assertEqual([2, 3], result)
-
-    def test_get_display_data_single_empty_val(self):
-        test_data = {'a': 1, 'b': {}, 'c': []}
+        test_data = {'a': 1, 'b': [], 'c': [1, 2, 3], 'd': 4}
         fields = ('a', 'b', 'c')
 
         result = data_utils.get_display_data_single(fields, test_data)
-        self.assertEqual([1, '-', '-'], result)
-
-    def test_get_display_data_single_list_val(self):
-        test_data = {'a': 1, 'b': ['2'], 'c': ['3', '4']}
-        fields = ('a', 'b', 'c')
-
-        result = data_utils.get_display_data_single(fields, test_data)
-        self.assertEqual([1, '2', '3, 4'], result)
+        self.assertEqual([1, [], [1, 2, 3]], result)
 
     def test_get_display_data_bad_key(self):
         test_data = {'a': 1, 'b': 2, 'c': 3}
         fields = ('b', 'bad_key')
 
-        self.assertRaises(KeyError,
+        self.assertRaises(error.BadDataException,
                           data_utils.get_display_data_single,
                           fields, test_data)
 
@@ -242,3 +229,14 @@ class TestUtils(base.UnitTestCase):
         result = utils.str_to_unicode(test_data)
         self.assertIsInstance(result, six.text_type)
         self.assertEqual(result, expected_data)
+
+    def test_HTTP_error_message(self):
+        text = 'message text'
+
+        self.m_request.post('/api/v1/address',
+                            json={'message': text},
+                            status_code=403)
+
+        with self.assertRaisesRegexp(error.HTTPError,
+                                     '403.*{}'.format(text)):
+            client.Client().post_request('address')

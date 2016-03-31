@@ -17,6 +17,8 @@ which implement command line interface logic
 All action classes must be added to action_tuple to be used by parser
 """
 from fuelclient.cli.actions.deploy import DeployChangesAction
+from fuelclient.cli.actions.deploy import RedeployChangesAction
+from fuelclient.cli.actions.deployment_tasks import DeploymentTasksAction
 from fuelclient.cli.actions.environment import EnvironmentAction
 from fuelclient.cli.actions.fact import DeploymentAction
 from fuelclient.cli.actions.fact import ProvisioningAction
@@ -42,34 +44,38 @@ from fuelclient.cli.actions.task import TaskAction
 from fuelclient.cli.actions.user import UserAction
 from fuelclient.cli.actions.plugins import PluginAction
 from fuelclient.cli.actions.fuelversion import FuelVersionAction
+from fuelclient.cli.actions.vip import VIPAction
 
 actions_tuple = (
-    ReleaseAction,
-    RoleAction,
-    EnvironmentAction,
     DeployChangesAction,
-    NodeAction,
     DeploymentAction,
-    ProvisioningAction,
-    StopAction,
-    ResetAction,
-    SettingsAction,
-    VmwareSettingsAction,
-    NetworkAction,
-    NetworkTemplateAction,
-    TaskAction,
-    SnapshotAction,
+    DeploymentTasksAction,
+    EnvironmentAction,
+    FuelVersionAction,
+    GraphAction,
     HealthCheckAction,
-    UserAction,
-    PluginAction,
+    NetworkAction,
+    NetworkGroupAction,
+    NetworkTemplateAction,
+    NodeAction,
     NodeGroupAction,
     NotificationsAction,
     NotifyAction,
-    TokenAction,
-    GraphAction,
-    FuelVersionAction,
-    NetworkGroupAction,
     OpenstackConfigAction,
+    PluginAction,
+    ProvisioningAction,
+    RedeployChangesAction,
+    ReleaseAction,
+    ResetAction,
+    RoleAction,
+    SettingsAction,
+    SnapshotAction,
+    StopAction,
+    TaskAction,
+    TokenAction,
+    UserAction,
+    VIPAction,
+    VmwareSettingsAction,
 )
 
 actions = dict(
