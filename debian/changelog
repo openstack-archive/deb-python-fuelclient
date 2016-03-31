@@ -2,6 +2,7 @@ python-fuelclient (9.0.0~0+2016.03.21.git.3130252902-1) experimental; urgency=me
 
   * New upstream release based on commit sha256: 3130252902 from: 2016-03-21.
   * Fixed (build-)depends for this releaes.
+  * Set HOME=$(CURDIR) when running unit tests.
 
  -- Thomas Goirand <zigo@debian.org>  Thu, 31 Mar 2016 21:37:45 +0200
 
