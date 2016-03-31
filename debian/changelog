@@ -1,3 +1,9 @@
+python-fuelclient (9.0.0~0+2016.03.21.git.3130252902-1) experimental; urgency=medium
+
+  * New upstream release based on commit sha256: 3130252902 from: 2016-03-21.
+
+ -- Thomas Goirand <zigo@debian.org>  Thu, 31 Mar 2016 21:37:45 +0200
+
 python-fuelclient (9.0.0~0+2016.02.01.git.7f4bacbed0-1) experimental; urgency=medium
 
   * Initial release. (Closes: #813583)
