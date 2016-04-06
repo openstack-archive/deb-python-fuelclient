@@ -1,6 +1,7 @@
-python-fuelclient (9.0.0~0+2016.03.21.git.3130252902-1) experimental; urgency=medium
+python-fuelclient (9.0.0~0+2016.03.21.git.3130252902-1) unstable; urgency=medium
 
   * New upstream release based on commit sha256: 3130252902 from: 2016-03-21.
+  * Uploading to unstable.
   * Fixed (build-)depends for this releaes.
   * Set HOME=$(CURDIR) when running unit tests.
 
