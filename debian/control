@@ -38,7 +38,7 @@ Build-Depends-Indep: python-cliff (>= 1.15.0),
                      python3-yaml (>= 3.1.0),
                      subunit,
                      testrepository,
-Standards-Version: 3.9.6
+Standards-Version: 3.9.7
 Vcs-Browser: https://anonscm.debian.org/gitweb/?p=openstack/python-fuelclient.git;a=summary
 Vcs-Git: https://anonscm.debian.org/git/openstack/python-fuelclient.git
 Homepage: https://github.com/openstack/python-fuelclient
