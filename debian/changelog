@@ -2,6 +2,7 @@ python-fuelclient (9.0.0~0+2016.03.21.git.3130252902-2) UNRELEASED; urgency=medi
 
   * Standards-Version is 3.9.8 now (no change)
   * d/rules: Removed UPSTREAM_GIT with default value
+  * d/copyright: Changed source URL to https protocol
 
  -- Ondřej Nový <novy@ondrej.org>  Sat, 09 Apr 2016 19:26:46 +0200
 
