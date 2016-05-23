@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-#    Copyright 2015 Mirantis, Inc.
+#    Copyright 2016 Mirantis, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -14,19 +14,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from fuelclient import objects
+from fuelclient.v1 import base_v1
 
-def get_fake_task(task_id=None, status=None, name=None,
-                  cluster=None, result=None, progress=None):
-    """Create a fake task
 
-    Returns the serialized and parametrized representation of a dumped Fuel
-    Task. Represents the average amount of data.
+class ClusterSettingsClient(base_v1.BaseV1Client):
 
-    """
-    return {'status': status or 'running',
-            'name': name or 'deploy',
-            'id': task_id or 42,
-            'task_id': task_id or 42,
-            'cluster': cluster or 34,
-            'result': result or '',
-            'progress': progress or 50}
+    _entity_wrapper = objects.Task
+
+    def download(self, transaction_id):
+        task = self._entity_wrapper(transaction_id)
+        return task.cluster_settings()
+
+
+def get_client():
+    return ClusterSettingsClient()

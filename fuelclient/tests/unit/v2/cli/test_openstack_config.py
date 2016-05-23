@@ -36,21 +36,21 @@ class TestOpenstackConfig(test_engine.BaseCLITest):
             cmd_line='--env {0} --node {1}'.format(self.CLUSTER_ID,
                                                    self.NODE_ID),
             expected_kwargs={'cluster_id': self.CLUSTER_ID,
-                             'node_id': self.NODE_ID, 'node_role': None,
+                             'node_ids': [self.NODE_ID], 'node_role': None,
                              'is_active': True}
         )
 
     def test_config_list_for_role(self):
         self._test_config_list(
             cmd_line='--env {0} --role compute'.format(self.CLUSTER_ID),
-            expected_kwargs={'cluster_id': self.CLUSTER_ID, 'node_id': None,
+            expected_kwargs={'cluster_id': self.CLUSTER_ID, 'node_ids': None,
                              'node_role': 'compute', 'is_active': True}
         )
 
     def test_config_list_for_cluster(self):
         self._test_config_list(
             cmd_line='--env {0}'.format(self.CLUSTER_ID),
-            expected_kwargs={'cluster_id': self.CLUSTER_ID, 'node_id': None,
+            expected_kwargs={'cluster_id': self.CLUSTER_ID, 'node_ids': None,
                              'node_role': None, 'is_active': True}
         )
 
@@ -71,14 +71,14 @@ class TestOpenstackConfig(test_engine.BaseCLITest):
         self.m_get_client.assert_called_once_with('openstack-config', mock.ANY)
         self.m_client.upload.assert_called_once_with(
             path='config.yaml', cluster_id=self.CLUSTER_ID,
-            node_id=self.NODE_ID, node_role=None)
+            node_ids=[self.NODE_ID], node_role=None)
 
     @mock.patch('sys.stderr')
     def test_config_upload_fail(self, mocked_stderr):
         cmd = 'openstack-config upload --env {0} ' \
               '--node {1}'.format(self.CLUSTER_ID, self.NODE_ID)
         self.assertRaises(SystemExit, self.exec_command, cmd)
-        self.assertIn('-f/--file',
+        self.assertIn('--file',
                       mocked_stderr.write.call_args_list[-1][0][0])
         mocked_stderr.reset_mock()
 
@@ -101,7 +101,7 @@ class TestOpenstackConfig(test_engine.BaseCLITest):
     def test_config_download_fail(self, mocked_stderr):
         cmd = 'openstack-config download 1'
         self.assertRaises(SystemExit, self.exec_command, cmd)
-        self.assertIn('-f/--file',
+        self.assertIn('--file',
                       mocked_stderr.write.call_args_list[-1][0][0])
 
     def test_config_execute(self):
@@ -111,8 +111,8 @@ class TestOpenstackConfig(test_engine.BaseCLITest):
 
         self.m_get_client.assert_called_once_with('openstack-config', mock.ANY)
         self.m_client.execute.assert_called_once_with(
-            cluster_id=self.CLUSTER_ID, node_id=self.NODE_ID, node_role=None,
-            force=False)
+            cluster_id=self.CLUSTER_ID, node_ids=[self.NODE_ID],
+            node_role=None, force=False)
 
     def test_config_force_execute(self):
         cmd = 'openstack-config execute --env {0} --node {1} --force' \
@@ -121,5 +121,5 @@ class TestOpenstackConfig(test_engine.BaseCLITest):
 
         self.m_get_client.assert_called_once_with('openstack-config', mock.ANY)
         self.m_client.execute.assert_called_once_with(
-            cluster_id=self.CLUSTER_ID, node_id=self.NODE_ID, node_role=None,
-            force=True)
+            cluster_id=self.CLUSTER_ID, node_ids=[self.NODE_ID],
+            node_role=None, force=True)
