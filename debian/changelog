@@ -1,4 +1,4 @@
-python-fuelclient (9.0.1-1) UNRELEASED; urgency=medium
+python-fuelclient (9.0.1-1) unstable; urgency=medium
 
   * Team upload.
   * New upstream release
@@ -6,7 +6,7 @@ python-fuelclient (9.0.1-1) UNRELEASED; urgency=medium
   * d/control: Using OpenStack's Gerrit as VCS URLs.
   * Bumped debhelper compat version to 10
 
- -- Ondřej Nový <onovy@debian.org>  Mon, 26 Sep 2016 19:09:50 +0200
+ -- Ondřej Nový <onovy@debian.org>  Thu, 29 Dec 2016 00:07:21 +0100
 
 python-fuelclient (9.0.0-1) unstable; urgency=medium
 
