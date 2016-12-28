@@ -258,6 +258,14 @@ def get_sync_deployment_tasks_arg():
         help="Update tasks for each release.")
 
 
+def get_dry_run_deployment_arg():
+    return get_boolean_arg(
+        "dry-run",
+        dest='dry_run',
+        help="Specifies to dry-run a deployment by configuring task executor"
+             "to dump the deployment graph to a dot file.")
+
+
 def get_file_pattern_arg():
     return get_str_arg(
         "filepattern",
@@ -304,6 +312,33 @@ def get_single_role_arg(help_msg):
 
 def get_check_arg(help_msg):
     return get_set_type_arg("check", help=help_msg)
+
+
+def get_ostf_username_arg():
+    return get_str_arg(
+        "ostf_username",
+        dest="ostf_username",
+        help="OSTF username",
+        required=False
+    )
+
+
+def get_ostf_password_arg():
+    return get_str_arg(
+        "ostf_password",
+        dest="ostf_password",
+        help="OSTF password",
+        required=False
+    )
+
+
+def get_ostf_tenant_name_arg():
+    return get_str_arg(
+        "ostf_tenant_name",
+        dest="ostf_tenant_name",
+        help="OSTF tenant name",
+        required=False
+    )
 
 
 def get_change_password_arg(help_msg):
@@ -646,6 +681,31 @@ def get_vip_arg(help_msg):
     )
 
 
+def get_vip_name_arg(help_msg):
+    return get_str_arg(
+        "vip-name",
+        flags=("--name",),
+        help=help_msg
+    )
+
+
+def get_vip_namespace_arg(help_msg, required=False):
+    return get_str_arg(
+        "vip-namespace",
+        flags=("--namespace",),
+        required=required,
+        help=help_msg
+    )
+
+
+def get_ip_address_arg(help_msg):
+    return get_str_arg(
+        "ip-address",
+        flags=("--address", "--ip-addr"),
+        help=help_msg
+    )
+
+
 def get_ip_id_arg(help_msg):
     return get_int_arg(
         "ip-address-id",
@@ -680,9 +740,7 @@ def get_upload_file_arg(help_msg):
 
 def get_status_arg(help_msg):
     default_kwargs = {
-        "action": SetAction,
         "flags": ("--status",),
-        "nargs": '+',
         "default": None,
         "help": help_msg
     }
@@ -691,10 +749,25 @@ def get_status_arg(help_msg):
 
 def get_deployment_node_arg(help_msg):
     default_kwargs = {
-        "action": SetAction,
         "flags": ("--node-id",),
-        "nargs": '+',
         "default": None,
         "help": help_msg
     }
     return get_arg("node", **default_kwargs)
+
+
+def get_tasks_names_arg(help_msg):
+    default_kwargs = {
+        "flags": ("-d", "--task-name",),
+        "default": None,
+        "help": help_msg
+    }
+    return get_arg("task-name", **default_kwargs)
+
+
+def get_show_parameters_arg(help_msg):
+    default_kwargs = {
+        "flags": ("-p", "--show-parameters",),
+        "help": help_msg
+    }
+    return get_boolean_arg("show-parameters", **default_kwargs)

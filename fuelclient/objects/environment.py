@@ -93,17 +93,17 @@ class Environment(BaseObject):
             [{"id": n.id} for n in nodes]
         )
 
-    def deploy_changes(self):
+    def deploy_changes(self, dry_run=False):
         deploy_data = self.connection.put_request(
             "clusters/{0}/changes".format(self.id),
-            {}
+            {}, dry_run=int(dry_run)
         )
         return DeployTask.init_with_data(deploy_data)
 
-    def redeploy_changes(self):
+    def redeploy_changes(self, dry_run=False):
         deploy_data = self.connection.put_request(
             "clusters/{0}/changes/redeploy".format(self.id),
-            {}
+            {}, dry_run=int(dry_run)
         )
         return DeployTask.init_with_data(deploy_data)
 
@@ -415,19 +415,29 @@ class Environment(BaseObject):
     def is_in_running_test_sets(self, test_set):
         return test_set["testset"] in self._test_sets_to_run
 
-    def run_test_sets(self, test_sets_to_run):
+    def run_test_sets(self, test_sets_to_run, ostf_credentials=None):
         self._test_sets_to_run = test_sets_to_run
-        tests_data = map(
-            lambda testset: {
-                "testset": testset,
+
+        def make_test_set(name):
+            result = {
+                "testset": name,
                 "metadata": {
                     "config": {},
-                    "cluster_id": self.id
+                    "cluster_id": self.id,
                 }
-            },
-            test_sets_to_run
-        )
+            }
+            if ostf_credentials:
+                creds = result['metadata'].setdefault(
+                    'ostf_os_access_creds', {})
+                if 'tenant' in ostf_credentials:
+                    creds['ostf_os_tenant_name'] = ostf_credentials['tenant']
+                if 'username' in ostf_credentials:
+                    creds['ostf_os_username'] = ostf_credentials['username']
+                if 'password' in ostf_credentials:
+                    creds['ostf_os_password'] = ostf_credentials['password']
+            return result
 
+        tests_data = [make_test_set(ts) for ts in test_sets_to_run]
         testruns = self.connection.post_request(
             "testruns", tests_data, ostf=True)
         self._testruns_ids = [tr['id'] for tr in testruns]
@@ -456,11 +466,16 @@ class Environment(BaseObject):
             )
         )
 
-    def _get_method_url(self, method_type, nodes):
-        return "clusters/{0}/{1}/?nodes={2}".format(
+    def _get_method_url(self, method_type, nodes, force=False):
+        endpoint = "clusters/{0}/{1}/?nodes={2}".format(
             self.id,
             method_type,
             ','.join(map(lambda n: str(n.id), nodes)))
+
+        if force:
+            endpoint += '&force=1'
+
+        return endpoint
 
     def install_selected_nodes(self, method_type, nodes):
         return Task.init_with_data(
@@ -470,10 +485,10 @@ class Environment(BaseObject):
             )
         )
 
-    def execute_tasks(self, nodes, tasks):
+    def execute_tasks(self, nodes, tasks, force):
         return Task.init_with_data(
             self.connection.put_request(
-                self._get_method_url('deploy_tasks', nodes),
+                self._get_method_url('deploy_tasks', nodes=nodes, force=force),
                 tasks
             )
         )
@@ -640,3 +655,11 @@ class Environment(BaseObject):
         :rtype: object
         """
         return self.connection.put_request(self._get_ip_addrs_url(), data)
+
+    def create_vip(self, **vip_kwargs):
+        """Create VIP through request to Nailgun API
+
+        :param vip_data: attributes of the VIP to be created
+        """
+        return self.connection.post_request(self._get_ip_addrs_url(),
+                                            vip_kwargs)

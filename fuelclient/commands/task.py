@@ -50,10 +50,17 @@ class TaskMixIn(object):
         :return: path to resulting file
         :rtype: str
         """
-        return (serializer or Serializer()).write_to_path(
-            (file_path or cls.get_default_info_path(info_type,
-                                                    transaction_id)),
-            data)
+        serializer = serializer or Serializer()
+        if file_path:
+            return serializer.write_to_full_path(
+                file_path,
+                data
+            )
+        else:
+            return serializer.write_to_path(
+                cls.get_default_info_path(info_type, transaction_id),
+                data
+            )
 
     @staticmethod
     def get_default_info_path(info_type, transaction_id):
@@ -88,12 +95,12 @@ class TaskMixIn(object):
         :rtype: str
         """
         data = self.client.download(transaction_id=transaction_id)
-        data_file_path = TaskMixIn.write_info_to_file(
-            info_type,
-            data,
-            transaction_id,
-            file_path)
-        return data_file_path
+        return self.write_info_to_file(
+            info_type=info_type,
+            data=data,
+            transaction_id=transaction_id,
+            serializer=Serializer(),
+            file_path=file_path)
 
 
 class TaskInfoFileMixIn(TaskMixIn):
@@ -137,22 +144,17 @@ class TaskShow(TaskMixIn, base.BaseShowCommand):
 
 
 class TaskHistoryShow(TaskMixIn, base.BaseListCommand):
-    """Show deployment history about task with given id"""
+    """Show deployment history about task with given ID."""
 
     entity_name = 'deployment_history'
 
-    columns = (
-        'deployment_graph_task_name',
-        'node_id',
-        'status',
-        'time_start',
-        'time_end')
+    columns = ()
 
     def get_parser(self, prog_name):
         parser = super(TaskHistoryShow, self).get_parser(prog_name)
 
-        parser.add_argument('id', type=int,
-                            help='Id of the Task.')
+        parser.add_argument('id', type=int, help='Id of the Task')
+
         parser.add_argument(
             '-n',
             '--nodes',
@@ -168,17 +170,37 @@ class TaskHistoryShow(TaskMixIn, base.BaseListCommand):
             nargs='+',
             help='Show deployment history for specific statuses')
 
+        parser.add_argument(
+            '-d',
+            '--tasks-names',
+            type=str,
+            nargs='+',
+            help='Show deployment history for specific deployment tasks names')
+
+        parser.add_argument(
+            '-p',
+            '--show-parameters',
+            action='store_true',
+            default=False,
+            help='Show deployment tasks parameters')
         return parser
 
     def take_action(self, parsed_args):
+        # print parser
+        show_parameters = parsed_args.show_parameters
         data = self.client.get_all(
             transaction_id=parsed_args.id,
             nodes=parsed_args.nodes,
-            statuses=parsed_args.statuses)
-
+            statuses=parsed_args.statuses,
+            tasks_names=parsed_args.tasks_names,
+            show_parameters=show_parameters
+        )
+        if show_parameters:
+            self.columns = self.client.tasks_records_keys
+        else:
+            self.columns = self.client.history_records_keys
         data = data_utils.get_display_data_multi(self.columns, data)
-
-        return (self.columns, data)
+        return self.columns, data
 
 
 class TaskNetworkConfigurationDownload(TaskInfoFileMixIn, base.BaseCommand):

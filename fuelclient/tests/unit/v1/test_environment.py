@@ -14,7 +14,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-
 import mock
 import requests_mock as rm
 from six import moves
@@ -60,6 +59,59 @@ class TestEnvironment(base.UnitTestCase):
                       "deprecated since 7.0 release.",
                       m_stderr.getvalue())
 
+    @mock.patch('fuelclient.objects.task.DeployTask.init_with_data')
+    def test_deploy_changes(self, task_data):
+        dry_run = False
+        mdeploy = self.m_request.put('/api/v1/clusters/1/changes'
+                                     '?dry_run={0}'.format(
+                                         int(dry_run)), json={})
+
+        cmd = ['fuel', 'deploy-changes', '--env', '1']
+        self.execute(cmd)
+        self.check_deploy_redeploy_changes(dry_run, mdeploy)
+
+    @mock.patch('fuelclient.objects.task.DeployTask.init_with_data')
+    def test_deploy_changes_dry_run(self, task_data):
+        dry_run = True
+        mdeploy = self.m_request.put('/api/v1/clusters/1/changes'
+                                     '?dry_run={0}'.format(
+                                         int(dry_run)), json={})
+
+        cmd = ['fuel', 'deploy-changes', '--env', '1']
+
+        cmd.append('--dry-run')
+        self.execute(cmd)
+        self.check_deploy_redeploy_changes(dry_run, mdeploy)
+
+    @mock.patch('fuelclient.objects.task.DeployTask.init_with_data')
+    def test_redeploy_changes(self, task_data):
+        dry_run = False
+        mdeploy = self.m_request.put('/api/v1/clusters/1/changes/redeploy'
+                                     '?dry_run={0}'.format(
+                                         int(dry_run)), json={})
+
+        cmd = ['fuel', 'redeploy-changes', '--env', '1']
+
+        self.execute(cmd)
+        self.check_deploy_redeploy_changes(dry_run, mdeploy)
+
+    @mock.patch('fuelclient.objects.task.DeployTask.init_with_data')
+    def test_redeploy_changes_dry_run(self, task_data):
+        dry_run = True
+        mdeploy = self.m_request.put('/api/v1/clusters/1/changes/redeploy'
+                                     '?dry_run={0}'.format(
+                                         int(dry_run)), json={})
+
+        cmd = ['fuel', 'redeploy-changes', '--env', '1']
+
+        cmd.append('--dry-run')
+        self.execute(cmd)
+        self.check_deploy_redeploy_changes(dry_run, mdeploy)
+
+    def check_deploy_redeploy_changes(self, dry_run, mdeploy):
+        self.assertEqual(mdeploy.last_request.qs['dry_run'][0],
+                         str(int(dry_run)))
+
 
 class TestEnvironmentOstf(base.UnitTestCase):
 
@@ -80,6 +132,20 @@ class TestEnvironmentOstf(base.UnitTestCase):
         self.assertEqual(len(testruns), 2)
         self.assertIn(1, self.env._testruns_ids)
         self.assertIn(2, self.env._testruns_ids)
+
+    @mock.patch.object(Environment.connection, 'post_request')
+    def test_credentials_are_passed_to_ostf(self, post_request):
+        self.env.run_test_sets(['sanity'], {'tenant': 't1',
+                                            'username': 'u1',
+                                            'password': 'p1'})
+        run_test_request = post_request.call_args[0][1]
+        self.assertTrue(len(run_test_request) > 0, 'Got empty request')
+        self.assertIn('metadata', run_test_request[0])
+        self.assertIn('ostf_os_access_creds', run_test_request[0]['metadata'])
+        creds = run_test_request[0]['metadata']['ostf_os_access_creds']
+        self.assertEqual(creds['ostf_os_tenant_name'], 't1')
+        self.assertEqual(creds['ostf_os_username'], 'u1')
+        self.assertEqual(creds['ostf_os_password'], 'p1')
 
     @mock.patch.object(Environment.connection, 'get_request', mock.Mock(
         side_effect=[

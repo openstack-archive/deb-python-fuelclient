@@ -1,5 +1,7 @@
-python-fuelclient (9.0.0-2) UNRELEASED; urgency=medium
+python-fuelclient (9.0.1-1) UNRELEASED; urgency=medium
 
+  * Team upload.
+  * New upstream release
   * d/s/options: extend-diff-ignore of .gitreview
   * d/control: Using OpenStack's Gerrit as VCS URLs.
   * Bumped debhelper compat version to 10
